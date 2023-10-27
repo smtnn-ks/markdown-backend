@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import userService from './user.service'
 import { UserCreateDto, UserUpdateDto } from './dto'
+import { catchPrismaIdError } from '../utils'
 
 class UserController {
   async getAll(_req: Request, res: Response) {
@@ -9,8 +10,7 @@ class UserController {
   }
 
   async get(req: Request, res: Response) {
-    const { id } = req.params
-    if (!id) res.status(400).json({ message: 'ID не указан' })
+    const id = req.params.id
     const user = await userService.get(+id)
     res.status(201).json(user)
   }
@@ -22,18 +22,24 @@ class UserController {
   }
 
   async update(req: Request, res: Response) {
-    const { id } = req.params
-    if (!id) res.status(400).json({ message: 'ID не указан' })
+    const id = req.params.id
     const data = req.body as UserUpdateDto
-    const user = await userService.update(+id, data)
-    res.status(201).json(user)
+    try {
+      const user = await userService.update(+id, data)
+      res.status(201).json(user)
+    } catch (e) {
+      catchPrismaIdError(e, id, 'пользователя', res)
+    }
   }
 
   async delete(req: Request, res: Response) {
-    const { id } = req.params
-    if (!id) res.status(400).json({ message: 'ID не указан' })
-    const user = await userService.delete(+id)
-    res.status(201).json(user)
+    const id = req.params.id
+    try {
+      const user = await userService.delete(+id)
+      res.status(201).json(user)
+    } catch (e) {
+      catchPrismaIdError(e, id, 'пользователя', res)
+    }
   }
 }
 
