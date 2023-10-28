@@ -1,6 +1,6 @@
-import { Prisma } from '@prisma/client'
 import { client, prisma } from '../external'
 import { nanoid } from 'nanoid'
+import sharp from 'sharp'
 
 class PicService {
   async getAll() {
@@ -13,7 +13,8 @@ class PicService {
 
   async create(docId: string, file: Express.Multer.File) {
     const id = nanoid()
-    await client.putObject('pics', id, file.buffer)
+    const buffer = await sharp(file.buffer).webp({ quality: 80 }).toBuffer()
+    await client.putObject('pics', id, buffer)
     return await prisma.pic.create({ data: { id, docId } })
   }
 
