@@ -15,9 +15,10 @@ class PicController {
   }
 
   async create(req: Request, res: Response) {
+    const file = req.file
     const docId = req.params.id
     try {
-      const pic = await picService.create(docId)
+      const pic = await picService.create(docId, file as Express.Multer.File)
       res.status(201).json(pic)
     } catch (e) {
       catchPrismaIdError(e, docId, 'документ', res)
@@ -32,6 +33,12 @@ class PicController {
     } catch (e) {
       catchPrismaIdError(e, id, 'изобрежние', res)
     }
+  }
+
+  async presignedUrl(req: Request, res: Response) {
+    const id = req.params.id
+    const url = await picService.presignedUrl(id)
+    res.json({ url })
   }
 }
 

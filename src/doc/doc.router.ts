@@ -1,17 +1,25 @@
 import { Router } from 'express'
 import docController from './doc.controller'
+import { upload } from '../external'
 import {
   isNumberId,
   isStringId,
-  isDocDto,
+  isDocCreateDto,
 } from '../middleware/validation.middleware'
 
 const docRouter = Router()
 
 docRouter.get('/', docController.getAll)
 docRouter.get('/:id', isStringId, docController.get)
-docRouter.post('/:id', isNumberId, isDocDto, docController.create)
-docRouter.put('/:id', isStringId, isDocDto, docController.update)
+docRouter.post(
+  '/:id',
+  upload.single('file'),
+  isNumberId,
+  isDocCreateDto,
+  docController.create,
+)
+docRouter.put('/:id', upload.single('file'), isStringId, docController.update)
 docRouter.delete('/:id', isStringId, docController.delete)
+docRouter.get('/url/:id', isStringId, docController.presignedUrl)
 
 export default docRouter

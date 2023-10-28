@@ -32,11 +32,20 @@ export function isUserUpdateDto(req: Request, res: Response, next: () => void) {
   next()
 }
 
-export function isDocDto(req: Request, res: Response, next: () => void) {
+export function isDocCreateDto(req: Request, res: Response, next: () => void) {
   const { title } = req.body
   if (!title)
     return res
       .status(400)
       .json({ message: 'Отсутствует обязательное поле "title"' })
+  next()
+}
+
+export function isFile(req: Request, res: Response, next: () => void) {
+  const file = req.file
+  if (!file)
+    return res
+      .status(400)
+      .json({ message: 'Отсутствует обязательный файл в поле "file"' })
   next()
 }

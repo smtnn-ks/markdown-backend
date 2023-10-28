@@ -17,8 +17,9 @@ class DocController {
   async create(req: Request, res: Response) {
     const userId = req.params.id
     const title = req.body.title
+    const file = req.file
     try {
-      const doc = await docService.create(+userId, title)
+      const doc = await docService.create(+userId, title, file)
       res.status(201).json(doc)
     } catch (e) {
       catchPrismaIdError(e, userId, 'пользователя', res)
@@ -28,8 +29,9 @@ class DocController {
   async update(req: Request, res: Response) {
     const id = req.params.id
     const title = req.body.title
+    const file = req.file
     try {
-      const doc = await docService.update(id, title)
+      const doc = await docService.update(id, title, file)
       res.status(201).json(doc)
     } catch (e) {
       catchPrismaIdError(e, id, 'документ', res)
@@ -43,6 +45,19 @@ class DocController {
       res.status(201).json(doc)
     } catch (e) {
       catchPrismaIdError(e, id, 'документ', res)
+    }
+  }
+
+  // NOTE: А нужен ли здесь presignedUrl?
+
+  async presignedUrl(req: Request, res: Response) {
+    try {
+      const id = req.params.id
+      const url = await docService.presignedUrl(id)
+      res.json({ url })
+    } catch (e) {
+      console.error(e)
+      res.status(500).json({ message: (e as Error).message })
     }
   }
 }

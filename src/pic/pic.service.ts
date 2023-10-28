@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import { prisma } from '../external'
+import { client, prisma } from '../external'
 import { nanoid } from 'nanoid'
 
 class PicService {
@@ -11,20 +11,22 @@ class PicService {
     return await prisma.pic.findUnique({ where: { id } })
   }
 
-  async create(docId: string) {
-    const data: Prisma.PicCreateInput = {
-      id: nanoid(),
-      path: 'path',
-      doc: { connect: { id: docId } },
-    }
-    return await prisma.pic.create({ data })
+  async create(docId: string, file: Express.Multer.File) {
+    const id = nanoid()
+    await client.putObject('pics', id, file.buffer)
+    return await prisma.pic.create({ data: { id, docId } })
   }
 
   // NOTE: Картинки не нужно обнавлять. Пользователь может удалить ненужную
   // картинку и загрузить новую
 
   async delete(id: string) {
+    await client.removeObject('pics', id)
     return await prisma.pic.delete({ where: { id } })
+  }
+
+  async presignedUrl(id: string) {
+    return await client.presignedUrl('GET', 'pics', id)
   }
 }
 

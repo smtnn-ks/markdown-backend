@@ -20,7 +20,6 @@ model User {
 model Doc {
   id     String @id
   title  String
-  path   String
   userId Int
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   pics   Pic[]
@@ -28,7 +27,6 @@ model Doc {
 
 model Pic {
   id    String @id
-  path  String
   docId String
   doc   Doc    @relation(fields: [docId], references: [id], onDelete: Cascade)
 }
