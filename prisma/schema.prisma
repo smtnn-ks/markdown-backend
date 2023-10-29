@@ -12,7 +12,7 @@ model User {
   email          String  @unique
   password       String
   refreshToken   String
-  activationLink String
+  activationLink String  @unique
   isActivated    Boolean @default(false)
   docs           Doc[]
 }

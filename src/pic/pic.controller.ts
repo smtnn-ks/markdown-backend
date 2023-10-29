@@ -1,44 +1,57 @@
 import { Request, Response } from 'express'
 import picService from './pic.service'
-import { catchPrismaIdError } from '../utils'
 
 class PicController {
-  async getAll(_req: Request, res: Response) {
-    const pics = await picService.getAll()
-    res.json(pics)
-  }
-
-  async get(req: Request, res: Response) {
-    const id = req.params.id
-    const pic = await picService.get(id)
-    res.json(pic)
-  }
-
-  async create(req: Request, res: Response) {
-    const file = req.file
+  async getAll(req: Request, res: Response, next: (_: unknown) => void) {
+    // @ts-ignore
+    const userId = req.user.sub
     const docId = req.params.id
     try {
-      const pic = await picService.create(docId, file as Express.Multer.File)
-      res.status(201).json(pic)
+      const pics = await picService.getAll(userId, docId)
+      res.json(pics)
     } catch (e) {
-      catchPrismaIdError(e, docId, 'документ', res)
+      next(e)
     }
   }
 
-  async delete(req: Request, res: Response) {
+  async create(req: Request, res: Response, next: (_: unknown) => void) {
+    // @ts-ignore
+    const userId = req.user.sub
+    const docId = req.params.id
+    const file = req.file
+    try {
+      const pic = await picService.create(
+        userId,
+        docId,
+        file as Express.Multer.File,
+      )
+      res.status(201).json(pic)
+    } catch (e) {
+      next(e)
+    }
+  }
+
+  async delete(req: Request, res: Response, next: (_: unknown) => void) {
+    // @ts-ignore
+    const userId = req.user.sub
+    const docId = req.params.id1
+    const picId = req.params.id2
+    try {
+      const pic = await picService.delete(userId, docId, picId)
+      res.status(201).json(pic)
+    } catch (e) {
+      next(e)
+    }
+  }
+
+  async presignedUrl(req: Request, res: Response, next: (_: unknown) => void) {
     const id = req.params.id
     try {
-      const pic = await picService.delete(id)
-      res.status(201).json(pic)
+      const url = await picService.presignedUrl(id)
+      res.json({ url })
     } catch (e) {
-      catchPrismaIdError(e, id, 'изобрежние', res)
+      next(e)
     }
-  }
-
-  async presignedUrl(req: Request, res: Response) {
-    const id = req.params.id
-    const url = await picService.presignedUrl(id)
-    res.json({ url })
   }
 }
 

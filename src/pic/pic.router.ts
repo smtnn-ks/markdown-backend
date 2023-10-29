@@ -1,20 +1,35 @@
 import { Router } from 'express'
 import picController from './pic.controller'
-import { isStringId, isFile } from '../middleware/validation.middleware'
+import {
+  isStringId,
+  isTwoStringIds,
+  isFile,
+} from '../middleware/validation.middleware'
+import passport from 'passport'
 import { upload } from '../external'
 
 const picRouter = Router()
 
-picRouter.get('/', picController.getAll)
-picRouter.get('/:id', isStringId, picController.get)
+picRouter.get(
+  '/:id',
+  passport.authenticate('access', { session: false }),
+  isStringId,
+  picController.getAll,
+)
 picRouter.post(
   '/:id',
+  passport.authenticate('access', { session: false }),
   upload.single('file'),
-  isFile,
   isStringId,
+  isFile,
   picController.create,
 )
-picRouter.delete('/:id', isStringId, picController.delete)
+picRouter.delete(
+  '/:id1/:id2',
+  passport.authenticate('access', { session: false }),
+  isTwoStringIds,
+  picController.delete,
+)
 picRouter.get('/url/:id', isStringId, picController.presignedUrl)
 
 export default picRouter

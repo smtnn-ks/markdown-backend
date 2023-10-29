@@ -1,29 +1,45 @@
 import { prisma, client } from '../external'
 import { nanoid } from 'nanoid'
-
-// TODO: Вот что я думаю по поводу рефакторинга:
-// 1. Поле path есть id + '.md', так что можно от него избавится.
+import { HttpError } from '../middleware/error-handler.middleware'
 
 // NOTE: Удаление несуществующей записи из S3 не пробрасывает ошибку.
 
 class DocService {
-  async getAll() {
-    return await prisma.doc.findMany()
+  async getAll(userId: number) {
+    return await prisma.doc.findMany({ where: { userId } })
   }
 
-  async get(id: string) {
-    return await prisma.doc.findUnique({ where: { id } })
+  async get(id: string, userId: number) {
+    const doc = await prisma.doc.findUnique({
+      where: { id },
+      select: { id: true, title: true, userId: true },
+    })
+    if (doc?.userId !== userId)
+      throw new HttpError(401, 'Данный документ вам не принадлежит')
+    return doc
   }
 
   async create(userId: number, title: string, file?: Express.Multer.File) {
     const id = nanoid()
     await client.putObject('docs', id, file ? file.buffer : '')
-    return await prisma.doc.create({ data: { id, title, userId } })
+    return await prisma.doc.create({
+      data: { id, title, user: { connect: { id: userId } } },
+    })
   }
 
-  async update(id: string, title?: string, file?: Express.Multer.File) {
-    let doc = await prisma.doc.findUnique({ where: { id } })
+  async update(
+    id: string,
+    userId: number,
+    title?: string,
+    file?: Express.Multer.File,
+  ) {
+    let doc = await prisma.doc.findUnique({
+      where: { id },
+      select: { title: true, userId: true },
+    })
     if (doc) {
+      if (doc.userId !== userId)
+        throw new HttpError(401, 'Данный документ вам не принадлежит')
       if (file) {
         await client.removeObject('docs', id)
         await client.putObject('docs', id, file.buffer)
@@ -35,10 +51,17 @@ class DocService {
     return doc
   }
 
-  async delete(id: string) {
-    const doc = await prisma.doc.delete({ where: { id } })
+  // NOTE: Можно использовать sql для того, чтобы проверять userId за один
+  // запрос, используя транзакцию.
+  async delete(id: string, userId: number) {
+    const doc = await prisma.doc.findUnique({
+      where: { id },
+      select: { userId: true },
+    })
+    if (doc?.userId !== userId)
+      throw new HttpError(401, 'Данный документ вам не принадлежит')
     await client.removeObject('docs', id)
-    return doc
+    return await prisma.doc.delete({ where: { id } })
   }
 
   // NOTE: А нужен ли presignedUrl?
