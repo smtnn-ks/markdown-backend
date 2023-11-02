@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { validate } from 'typia'
+import { validate, tags } from 'typia'
 import { EmailDto, PasswordDto, UserDto, UserUpdateDto } from '../user/dto'
 
 export function isNumberId(req: Request, res: Response, next: () => void) {
@@ -61,6 +61,21 @@ export function isTitle(req: Request, res: Response, next: () => void) {
     return res
       .status(400)
       .json({ message: 'Отсутствует обязательное поле "title"' })
+  const validationResult = validate<string & tags.MaxLength<50>>(title)
+  if (!validationResult.success) {
+    return res.status(400).json(validationResult.errors)
+  }
+  next()
+}
+
+export function isOptionalTitle(req: Request, res: Response, next: () => void) {
+  const { title } = req.body
+  if (title) {
+    const validationResult = validate<string & tags.MaxLength<50>>(title)
+    if (!validationResult.success) {
+      return res.status(400).json(validationResult.errors)
+    }
+  }
   next()
 }
 

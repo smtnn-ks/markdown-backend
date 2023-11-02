@@ -25,7 +25,7 @@ class UserController {
   async logout(req: Request, res: Response, next: (_: unknown) => void) {
     try {
       // @ts-ignore
-      const id = req.body.sub
+      const id = req.user.sub
       const user = await userService.logout(+id)
       res.status(201).json(user)
     } catch (e) {
@@ -36,7 +36,7 @@ class UserController {
   async refresh(req: Request, res: Response, next: (_: unknown) => void) {
     try {
       // @ts-ignore
-      const id = req.body.sub
+      const id = req.user.sub
       const tokens = await userService.refresh(+id)
       res.status(201).json(tokens)
     } catch (e) {

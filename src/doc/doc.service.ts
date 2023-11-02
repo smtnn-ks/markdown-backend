@@ -1,6 +1,7 @@
 import { prisma, client } from '../external'
 import { nanoid } from 'nanoid'
 import { HttpError } from '../middleware/error-handler.middleware'
+import { isBinaryFileSync } from 'isbinaryfile'
 
 // NOTE: Удаление несуществующей записи из S3 не пробрасывает ошибку.
 
@@ -21,7 +22,15 @@ class DocService {
 
   async create(userId: number, title: string, file?: Express.Multer.File) {
     const id = nanoid()
-    await client.putObject('docs', id, file ? file.buffer : '')
+    if (file) {
+      if (file.size > 5 * Math.pow(10, 6))
+        throw new HttpError(400, 'Размер файла на должен превышать 5MB')
+      if (isBinaryFileSync(file.buffer))
+        throw new HttpError(400, 'Данный формат файла не поддерживается')
+      await client.putObject('docs', id, file.buffer)
+    } else {
+      await client.putObject('docs', id, '')
+    }
     return await prisma.doc.create({
       data: { id, title, user: { connect: { id: userId } } },
     })
@@ -41,6 +50,10 @@ class DocService {
       if (doc.userId !== userId)
         throw new HttpError(401, 'Данный документ вам не принадлежит')
       if (file) {
+        if (file.size > 5 * Math.pow(10, 6))
+          throw new HttpError(400, 'Размер файла на должен превышать 5MB')
+        if (isBinaryFileSync(file.buffer))
+          throw new HttpError(400, 'Данный формат файла не поддерживается')
         await client.removeObject('docs', id)
         await client.putObject('docs', id, file.buffer)
       }
@@ -64,7 +77,6 @@ class DocService {
     return await prisma.doc.delete({ where: { id } })
   }
 
-  // NOTE: А нужен ли presignedUrl?
   async presignedUrl(id: string) {
     return await client.presignedUrl('GET', 'docs', id)
   }

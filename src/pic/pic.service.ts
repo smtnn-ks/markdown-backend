@@ -2,6 +2,7 @@ import { client, prisma } from '../external'
 import { nanoid } from 'nanoid'
 import sharp from 'sharp'
 import { HttpError } from '../middleware/error-handler.middleware'
+import imageType from 'image-type'
 
 class PicService {
   async getAll(userId: number, docId: string) {
@@ -22,19 +23,24 @@ class PicService {
       },
     })
     if (!user || user.docs.length === 0)
-      throw new HttpError(403, 'У вас нет доступа к этой картинке')
+      throw new HttpError(403, 'У вас нет доступа к этому документу')
     const pics = user?.docs[0].pics
     return pics
   }
 
   async create(userId: number, docId: string, file: Express.Multer.File) {
+    if (file.size > 5 * Math.pow(10, 6))
+      throw new HttpError(400, 'Размер файла на должен превышать 5MB')
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { docs: { where: { id: docId } } },
     })
     if (!user || user.docs.length === 0)
-      throw new HttpError(403, 'У вас нет доступа к этому картинке')
+      throw new HttpError(403, 'У вас нет доступа к этому документу')
     const id = nanoid()
+    const fileType = imageType(file.buffer)
+    if (!(fileType && fileType?.mime.startsWith('image')))
+      throw new HttpError(400, 'Данный формат файла не поддерживается')
     const buffer = await sharp(file.buffer).webp({ quality: 80 }).toBuffer()
     await client.putObject('pics', id, buffer)
     return await prisma.pic.create({ data: { id, docId } })

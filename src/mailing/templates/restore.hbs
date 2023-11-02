@@ -1,0 +1,14 @@
+<link
+  rel='stylesheet'
+  href='https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css'
+/>
+
+<main class='container'>
+  <h3>Восстановление пароля</h3>
+  <p class='flow-text'>Нажмите на кнопку ниже для восстановления пароля</p>
+  <form method='post' action='{{link}}'>
+    <input type='hidden' name='token' value='{{token}}' />
+    <input type='submit' value='Восстановить' class='btn' />
+  </form>
+</main>
+

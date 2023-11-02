@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import { prisma } from '../external'
 import { HttpError } from '../middleware/error-handler.middleware'
 import { UserDto } from './dto'
+import mailingService from '../mailing/mailing.service'
 
 class UserService {
   SALT_ROUNDS = Number(process.env.SALT_ROUNDS as string)
@@ -18,6 +19,7 @@ class UserService {
 
     const hashPassword = await bcrypt.hash(password, this.SALT_ROUNDS)
     const activationLink = nanoid()
+    mailingService.sendActivationMail(email, activationLink)
     return await prisma.user.create({
       data: {
         email,
@@ -25,6 +27,7 @@ class UserService {
         refreshToken: '',
         activationLink,
       },
+      select: { id: true, email: true, isActivated: true },
     })
   }
 
@@ -62,6 +65,7 @@ class UserService {
     return await prisma.user.update({
       where: { id },
       data: { refreshToken: '' },
+      select: { id: true, email: true, isActivated: true },
     })
   }
 
@@ -93,6 +97,7 @@ class UserService {
     return await prisma.user.update({
       where: { activationLink },
       data: { isActivated: true },
+      select: { id: true, email: true, isActivated: true },
     })
   }
 
@@ -103,6 +108,7 @@ class UserService {
     const restoreToken = jwt.sign({ sub: user.id }, this.JWT_RESTORE_KEY, {
       expiresIn: '10m',
     })
+    mailingService.sendRestoreMail(email, restoreToken)
     return { restoreToken }
   }
 
@@ -111,6 +117,7 @@ class UserService {
     return await prisma.user.update({
       where: { id },
       data: { password: hashPassword },
+      select: { id: true, email: true, isActivated: true },
     })
   }
 }

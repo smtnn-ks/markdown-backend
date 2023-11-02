@@ -1,7 +1,11 @@
 import { Router } from 'express'
 import docController from './doc.controller'
 import { upload } from '../external'
-import { isStringId, isTitle } from '../middleware/validation.middleware'
+import {
+  isOptionalTitle,
+  isStringId,
+  isTitle,
+} from '../middleware/validation.middleware'
 import passport from 'passport'
 
 const docRouter = Router()
@@ -29,6 +33,7 @@ docRouter.put(
   passport.authenticate('access', { session: false }),
   upload.single('file'),
   isStringId,
+  isOptionalTitle,
   docController.update,
 )
 docRouter.delete(
