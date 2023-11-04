@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "rimraf build && tsc",
+    "start": "ts-node ./src/index.ts",
     "prepare": "ts-patch install"
   },
   "keywords": [],
@@ -43,7 +43,6 @@
     "nodemon": "^3.0.1",
     "prettier": "^3.0.3",
     "prisma": "^5.5.2",
-    "rimraf": "^5.0.5",
     "ts-node": "^10.9.1",
     "ts-patch": "^3.0.2",
     "typescript": "^5.2.2"

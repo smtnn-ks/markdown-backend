@@ -27,9 +27,9 @@ class DocService {
         throw new HttpError(400, 'Размер файла на должен превышать 5MB')
       if (isBinaryFileSync(file.buffer))
         throw new HttpError(400, 'Данный формат файла не поддерживается')
-      await client.putObject('docs', id, file.buffer)
+      client.putObject('docs', id, file.buffer)
     } else {
-      await client.putObject('docs', id, '')
+      client.putObject('docs', id, '')
     }
     return await prisma.doc.create({
       data: { id, title, user: { connect: { id: userId } } },
@@ -54,8 +54,9 @@ class DocService {
           throw new HttpError(400, 'Размер файла на должен превышать 5MB')
         if (isBinaryFileSync(file.buffer))
           throw new HttpError(400, 'Данный формат файла не поддерживается')
-        await client.removeObject('docs', id)
-        await client.putObject('docs', id, file.buffer)
+        client
+          .removeObject('docs', id)
+          .then(() => client.putObject('docs', id, file.buffer))
       }
       if (title && title != doc.title) {
         doc = await prisma.doc.update({ where: { id }, data: { title } })
@@ -64,16 +65,19 @@ class DocService {
     return doc
   }
 
-  // NOTE: Можно использовать sql для того, чтобы проверять userId за один
-  // запрос, используя транзакцию.
   async delete(id: string, userId: number) {
     const doc = await prisma.doc.findUnique({
       where: { id },
-      select: { userId: true },
+      select: { userId: true, pics: true },
     })
     if (doc?.userId !== userId)
       throw new HttpError(401, 'Данный документ вам не принадлежит')
-    await client.removeObject('docs', id)
+    client.removeObject('docs', id)
+
+    const picIds: string[] = []
+    doc.pics.forEach((pic) => picIds.push(pic.id))
+    client.removeObjects('pics', picIds)
+
     return await prisma.doc.delete({ where: { id } })
   }
 

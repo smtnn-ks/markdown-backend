@@ -42,7 +42,7 @@ class PicService {
     if (!(fileType && fileType?.mime.startsWith('image')))
       throw new HttpError(400, 'Данный формат файла не поддерживается')
     const buffer = await sharp(file.buffer).webp({ quality: 80 }).toBuffer()
-    await client.putObject('pics', id, buffer)
+    client.putObject('pics', id, buffer)
     return await prisma.pic.create({ data: { id, docId } })
   }
 
@@ -61,7 +61,7 @@ class PicService {
     })
     if (!user || user.docs.length === 0 || user.docs[0].pics.length === 0)
       throw new HttpError(403, 'У вас нет доступа к этому картинке')
-    await client.removeObject('pics', picId)
+    client.removeObject('pics', picId)
     return await prisma.pic.delete({ where: { id: picId } })
   }
 
