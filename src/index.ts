@@ -1,16 +1,16 @@
 import 'dotenv/config'
 import express from 'express'
-import docRouter from './doc/doc.router'
-import { prisma } from './external'
-import picRouter from './pic/pic.router'
-import userRouter from './user/user.router'
 import passport from 'passport'
+import crudRouter from './routers/crud.router'
+import { prisma } from './external'
+import { handleError } from './middleware/error-handler.middleware'
+import presignedRouter from './routers/presigned.router'
 import {
   accessStrategy,
   refreshStrategy,
   restoreStrategy,
 } from './user/strategies'
-import { handleError } from './middleware/error-handler.middleware'
+import userRouter from './user/user.router'
 
 const PORT = process.env.PORT || 6969
 
@@ -21,8 +21,8 @@ async function main() {
   app.use(express.urlencoded({ extended: true }))
 
   app.use('/user', userRouter)
-  app.use('/doc', docRouter)
-  app.use('/pic', picRouter)
+  app.use('/docs', crudRouter)
+  app.use('/url', presignedRouter)
 
   app.use(handleError)
 
