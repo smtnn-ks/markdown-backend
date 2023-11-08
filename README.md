@@ -61,8 +61,9 @@ npx prisma migrate dev --name <НАЗВАНИЕ_МИГРАЦИИ>
 
 > У minio есть [хранилище для тестирования](https://github.com/minio/minio-js#initialize-minio-client), а для SMTP можно использовать [ethereal email](https://ethereal.email/).
 
-5. Запустите приложение.
+5. Скомпилируйте проект и запустите его.
 
-```
-npm run start
+```console
+$ npm run build
+$ npm run start
 ```
